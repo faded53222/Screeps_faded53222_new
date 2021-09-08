@@ -313,8 +313,9 @@ Room.prototype.manage_room=function(){
 			}
 			else{
 				this.construct(info['room'],info['pos'],info['type']);
+				if(this.memory.long_keep['building_status_dic'][this.memory.maintain['structure'][i]['id']])
+					delete this.memory.long_keep['building_status_dic'][this.memory.maintain['structure'][i]['id']];
 				this.memory.maintain['structure'].splice(i,1);
-				delete this.memory.long_keep['building_status_dic'][T[i]['id']];
 				if(info['type']==STRUCTURE_SPAWN||STRUCTURE_TOWER)
 					this.memory.room_structures[info['type']].splice(this.memory.room_structures[info['type']].indexOf(info['id']),1);
 				i--;
