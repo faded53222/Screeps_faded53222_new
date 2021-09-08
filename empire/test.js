@@ -1,3 +1,4 @@
-var A={1:{2:'a',3:'b'},6:{5:'1',6:'0'}}
-delete A[6][6];
-console.log(Object.keys(A[6]));
+const C=(arr)=>[].concat(...arr);
+const R=(arr,repeats)=>[].concat([].concat(...Array.from({length:repeats},()=>arr)));
+var num=2,A=C([R(['WORK'],num),R(['CARRY','MOVE'],num)]);;
+console.log(A);

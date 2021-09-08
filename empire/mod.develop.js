@@ -14,6 +14,7 @@ var modDevelop={
 			room.memory.room_flags['controller'].push(room.createFlag(room.controller.pos,'controller_'+room.name,COLOR_BLUE,COLOR_BLUE));
 			Game.flags[room.memory.room_flags['controller'][0]].init_flag('controller',room.name,room.controller.id);
 			Game.flags[room.memory.room_flags['controller'][0]].build_road();
+			room.add_creep_Task('sign',0,room.controller.id,{'room':room.name,'pos':[room.controller.pos.x,room.controller.pos.y],'ammount':1,'ammount_all':1,'method':"sign",'detail':"Creeps of the world,unite!"});
 			var sources=room.find(FIND_SOURCES);
 			sources.sort(function(a,b){return room.find_dis(a.pos,room.getPositionAt(room.memory.centers['energy_center'][0],room.memory.centers['energy_center'][1]))-room.find_dis(b.pos,room.getPositionAt(room.memory.centers['energy_center'][0],room.memory.centers['energy_center'][1]))})
 			for(var i=0;i<sources.length;i++){

@@ -38,25 +38,26 @@ Spawn.prototype.run=function(){
 	if(role=='harvester'||role=='builder'||role=='repairer'||role=='upgrader'||role=='carrier'){
 		if(role=='harvester'){
 			if(this.room.memory.lv>1&&this.memory.urgent_spawn_count>=150){
-				Body=C([R([WORK],2),R([CARRY],1),R([MOVE],1)]);
+				Body=C([R([WORK],2),R([CARRY,MOVE],1)]);
 				tm0={'work_parts':2};
 			}
 		}
 		else if(role=='carrier'){
 			num=Math.floor(this.room.energyCapacityAvailable/150);
 			if(this.room.memory.lv>1&&this.memory.urgent_spawn_count>=150) num=2;
-			Body=C([R([CARRY],num*2),R([MOVE],num)]);
+			Body=C([R([CARRY,CARRY,MOVE],num)]);
 			tm0={'carry_parts':2*num};
 		}
 		else{
 			num=Math.floor(this.room.energyCapacityAvailable/200);
 			if(this.room.memory.lv>1&&this.memory.urgent_spawn_count>=150) num=1;
-			Body=C([R([WORK],num),R([CARRY],num),R([MOVE],num)]);
+			Body=C([R([WORK],num),R([CARRY,MOVE],num)]);
 			tm0={'work_parts':num};
 		}
 		switch(role){
 			case 'harvester':tm={get_e_tasks:{'normal':['harvest','take'],'spawn':['take','harvest']},
-			get_e_demands:{'normal':[{id:Mem['work_id']},{id:Game.flags[Mem['flag_name']].memory.container_id}],'spawn':[{id:Game.flags[Mem['flag_name']].memory.container_id},{id:Mem['work_id']}]},
+			get_e_demands:{'normal':[{id:Mem['work_id']},{id:Game.flags[Mem['flag_name']].memory.container_id}],
+			'spawn':[{id:Game.flags[Mem['flag_name']].memory.container_id},{id:Mem['work_id']}]},
 			use_e_tasks:{'normal':['bring','bring','bring'],'spawn':['bring','bring']},
 			use_e_demands:{'normal':[{id:Game.flags[Mem['flag_name']].memory.link_id},{id:Game.flags[Mem['flag_name']].memory.container_id},[-1,0,-0.5]],'spawn':[{id:Game.flags[Mem['flag_name']].memory.link_id},[-1]]}};break;			
 			case 'builder':tm={get_e_tasks:{'normal':['take','take'],'spawn':['take']},
@@ -69,8 +70,8 @@ Spawn.prototype.run=function(){
 			use_e_demands:{'normal':[[0],['spawn'],['extension'],['road'],['tower'],['container'],['link'],['storage'],[0]],'spawn':[[-1]]}};break;
 			case 'upgrader':tm={get_e_tasks:{'normal':['take','take'],'spawn':['take']},
 			get_e_demands:{'normal':[[0,1,-0.5],[-1]],'spawn':[[0,1,-0.5]]},
-			use_e_tasks:{'normal':['upgrade','build','build','build','build','build','build','build','repair'],'spawn':['bring']},
-			use_e_demands:{'normal':[[0],['spawn'],['extension'],['road'],['tower'],['container'],['link'],['storage'],[0]],'spawn':[[-1]]}};break;
+			use_e_tasks:{'normal':['sign','upgrade','build','build','build','build','build','build','build','repair'],'spawn':['bring']},
+			use_e_demands:{'normal':[[0],[0],['spawn'],['extension'],['road'],['tower'],['container'],['link'],['storage'],[0]],'spawn':[[-1]]}};break;
 			case 'carrier':tm={get_e_tasks:{'normal':['take','take','take'],'spawn':['take','take','take']},
 			get_e_demands:{'normal':[[1],[0],[-0.5]],'spawn':[[1],[0],[-0.5]]},
 			use_e_tasks:{'normal':['bring','bring','bring'],'spawn':['bring','bring','bring']},
@@ -113,7 +114,6 @@ Spawn.prototype.run=function(){
 			if(this.memory.urgent_spawn_count>=50) this.room.memory.urgent_status['spawn']=1;
 		}
 	else{
-		console.log('ERROR SPAWN',spawnSuccess);
 		this.room.memory.urgent_status['spawn']=0;
 		this.memory.urgent_spawn_count=0;
 		this.memory.spawn_memory=-1;

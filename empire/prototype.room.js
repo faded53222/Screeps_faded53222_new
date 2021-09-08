@@ -9,8 +9,8 @@ Room.prototype.init_room=function(mod=0){
 	this.memory.mod=mod;
 	this.memory.lv=0;
 	this.memory.urgent_status={'spawn':0};
-	this.memory.creep_Task={'harvest':{'0':{}},'take':{'2':{},'1':{},'0':{},'-0.5':{},'-1':{}},'bring':{'0':{},'-0.5':{},'-1':{}},'build':{'spawn':{},'extension':{},'road':{},'tower':{},'container':{},'link':{},'storage':{}},'upgrade':{'0':{}},'repair':{'0':{}}};
-	this.memory.virtual_creep_Task={'harvest':{'0':{}},'take':{'2':{},'1':{},'0':{},'-0.5':{},'-1':{}},'bring':{'0':{},'-0.5':{},'-1':{}},'build':{'spawn':{},'extension':{},'road':{},'tower':{},'container':{},'link':{},'storage':{}},'upgrade':{'0':{}},'repair':{'0':{}}};
+	this.memory.creep_Task={'harvest':{'0':{}},'take':{'2':{},'1':{},'0':{},'-0.5':{},'-1':{}},'bring':{'0':{},'-0.5':{},'-1':{}},'build':{'spawn':{},'extension':{},'road':{},'tower':{},'container':{},'link':{},'storage':{}},'upgrade':{'0':{}},'repair':{'0':{}},'sign':{'0':{}}};
+	this.memory.virtual_creep_Task={'harvest':{'0':{}},'take':{'2':{},'1':{},'0':{},'-0.5':{},'-1':{}},'bring':{'0':{},'-0.5':{},'-1':{}},'build':{'spawn':{},'extension':{},'road':{},'tower':{},'container':{},'link':{},'storage':{}},'upgrade':{'0':{}},'repair':{'0':{}},'sign':{'0':{}}};
 	this.memory.room_Task={'spawn':[],'adjust_spawn_carry_task':[],'add_maintain_structure':[],'destory':[],'remove':[],'construct':[]};
 	this.memory.room_Plan={};
 	this.memory.room_rooms=[this.name];
@@ -342,12 +342,9 @@ Room.prototype.manage_room=function(){
 				else if(1.25*this.memory.temp_keep['consume_energy']>=this.memory.temp_keep['harvest_energy']&&this.memory.temp_keep['carry_energy']>=1.25*this.memory.temp_keep['consume_energy']&&this.memory.maintain['creep']['carrier']>=2)
 					this.memory.maintain['creep']['carrier']-=1;
 		}
-		//console.log('harvest',this.memory.temp_keep['harvest_energy']);
-		//console.log('consume',this.memory.temp_keep['consume_energy']);
-		//console.log('carry',this.memory.temp_keep['carry_energy']);
-		this.memory.temp_keep['last_harvest_energy']=this.memory.temp_keep['harvest_energy']-0.5*this.memory.temp_keep['last_harvest_energy'];
-		this.memory.temp_keep['last_consume_energy']=this.memory.temp_keep['consume_energy']-0.5*this.memory.temp_keep['last_consume_energy'];
-		this.memory.temp_keep['last_carry_energy']=this.memory.temp_keep['carry_energy']-0.5*this.memory.temp_keep['last_carry_energy'];
+		this.memory.temp_keep['last_harvest_energy']=this.memory.temp_keep['harvest_energy']-this.memory.temp_keep['last_harvest_energy']/2;
+		this.memory.temp_keep['last_consume_energy']=this.memory.temp_keep['consume_energy']-this.memory.temp_keep['last_consume_energy']/2;
+		this.memory.temp_keep['last_carry_energy']=this.memory.temp_keep['carry_energy']-this.memory.temp_keep['last_carry_energy']/2;
 		this.memory.temp_keep['harvest_energy']=this.memory.temp_keep['last_harvest_energy']/2;
 		this.memory.temp_keep['consume_energy']=this.memory.temp_keep['last_consume_energy']/2;
 		this.memory.temp_keep['carry_energy']=this.memory.temp_keep['last_carry_energy']/2;
@@ -394,7 +391,6 @@ Room.prototype.manage_room=function(){
 }
 Room.prototype.auto_construct=function(type,num){
 	for(var i=0;i<num;i++){
-		console.log(type,num);
 		this.construct(this.name,this.memory.build_pos[0],type);
 		var pos=this.memory.build_pos[0];
 		for(var each of [[pos[0]-1,pos[1]],[pos[0]+1,pos[1]],[pos[0],pos[1]-1],[pos[0],pos[1]+1]]){
@@ -436,7 +432,6 @@ Room.prototype.construct=function(room,pos,type,auto=0){
 			if(lab==0) this.construct(this.name,each,STRUCTURE_ROAD);
 		}
 	}
-	if(type==STRUCTURE_STORAGE) console.log("LLLLL",already_build);
 	if(already_build==0){
 		if(type==STRUCTURE_CONTAINER||type==STRUCTURE_LINK){
 			if(this.memory.build_pos.indexOf(pos)!=-1)
