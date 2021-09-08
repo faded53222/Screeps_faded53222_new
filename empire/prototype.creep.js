@@ -274,7 +274,7 @@ Creep.prototype.contract_Task=function(){
 				if(Task['detail']) keep_T['detail']=Task['detail'];
 				this.memory.contracted_Task.push(keep_T);
 				if(!this.store.getCapacity()&&type=='harvest') c_ammount=0;
-				else c_ammount-=t_ammount;
+				else if(type!='sign') c_ammount-=t_ammount;
 				Task['ammount']-=t_ammount;
 				c_room=Game.rooms[Task['room']];
 				c_pos=Game.rooms[Task['room']].getPositionAt(Task['pos'][0],Task['pos'][1]);
