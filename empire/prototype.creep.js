@@ -136,7 +136,7 @@ Creep.prototype.contract_Task=function(){
 			}
 		}
 		if(t_eff0==0&&t_eff1==0) return;
-	}	
+	}
 	var c_ammount=this.store.getFreeCapacity();
 	if(!this.store.getCapacity()||(t_eff0>=t_eff1&&c_ammount>0)){
 		var TAS,DEM,eff_keep=0;
@@ -217,11 +217,14 @@ Creep.prototype.contract_Task=function(){
 									Task=each;
 								}
 							}
-							if(lab==1) break;
+							if(lab==1||(lab==0&&!(type=='take'&&demands[0]==-1))) break;
 						}
 						if(lab==0) break;
 					}
-					if(max_eff<eff_keep/2) break;
+					if(max_eff<eff_keep/2){
+						if(!(type=='take'&&demands[0]==-1)) break;
+						if(max_eff<eff_keep/10) break;
+					}
 					eff_keep=max_eff;
 					this.memory.contracted_Task.push({'type':type,'room':Task['room'],'pos':Task['pos'],'ammount':t_ammount,'ammount_all':t_ammount,'method':Task['method'],'id':Task['id'],'status':Task['status'],'time':Task['time']});
 					c_ammount-=t_ammount;
@@ -296,10 +299,13 @@ Creep.prototype.contract_Task=function(){
 								Task=each;
 							}
 						}
-						if(lab==1||(lab==0&&(type=='build'||(type=='bring'&&demands[0]!=-1)))) break;
+						if(lab==1||(lab==0&&!(type=='upgrade'||(type=='bring'&&demands[0]==-1)||type=='harvest'))) break;
 					}
 					if(lab==0) break;
-					if(max_eff<eff_keep/2) break;
+					if(max_eff<eff_keep/2){
+						if(!(type=='bring'&&demands[0]==-1)) break;
+						if(max_eff<eff_keep/10) break;
+					}
 					eff_keep=max_eff;
 					if(eff_keep>10000) eff_keep-=10000;
 					this.memory.contracted_Task.push({'type':type,'room':Task['room'],'pos':Task['pos'],'ammount':t_ammount,'ammount_all':t_ammount,'method':Task['method'],'id':Task['id'],'status':Task['status'],'time':Task['time']});
@@ -319,8 +325,10 @@ Creep.prototype.execute_Task=function(){
 		Game.rooms[this.memory.center_room].memory.temp_keep['consume_energy']+=this.memory.work_parts*2;
 	if(this.memory.cool_down_tick>0){
 		this.memory.cool_down_tick-=1;
-		if(this.memory.role=='carrier') Game.rooms[this.memory.center_room].memory.temp_keep['carry_energy']+=this.memory.carry_parts*2;
-		else if(this.memory.role=='builder'||this.memory.role=='upgrader'||this.memory.role=='repairer') Game.rooms[this.memory.center_room].memory.temp_keep['consume_energy']+=this.memory.work_parts*3;
+		if(Game.rooms[this.memory.center_room].memory.urgent_status['spawn']==0){
+			if(this.memory.role=='carrier') Game.rooms[this.memory.center_room].memory.temp_keep['carry_energy']+=this.memory.carry_parts*2;
+			else if(this.memory.role=='builder'||this.memory.role=='upgrader'||this.memory.role=='repairer') Game.rooms[this.memory.center_room].memory.temp_keep['consume_energy']+=this.memory.work_parts*2;	
+		}
 		return;
 	}
 	if(this.memory.contracted_Task.length==0) this.contract_Task();
@@ -511,10 +519,8 @@ Creep.prototype.go_to_room=function(room_name=-1){
 		if(!this.memory.target_room){
 			return 0;
 		}
+		if(this.memory.target_room) return 0;
 		room_name=this.memory.target_room;
-	}
-	if(room_name==-1){
-		return 0;
 	}
 	if(this.room.name!=room_name){
 		var exit=this.room.findExitTo(room_name);
