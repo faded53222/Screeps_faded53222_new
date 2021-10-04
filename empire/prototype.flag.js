@@ -2,7 +2,7 @@ var typesource=require('type.source');
 var typecontroller=require('type.controller');
 var typecore=require('type.core');
 var type_dic={'source':typesource,'controller':typecontroller,'core':typecore};
-var flag_creep_dic={'source':'harvester','controller':'upgrader','core':'carrier'};
+var flag_creep_dic={'source':'harvester','core':'carrier'};
 const C=(arr)=>[].concat(...arr);
 const R=(arr,repeats)=>[].concat([].concat(...Array.from({length:repeats},()=>arr)));
 Flag.prototype.init_flag=function(type,room_name,serve_id=-1){
@@ -19,6 +19,11 @@ Flag.prototype.init_flag=function(type,room_name,serve_id=-1){
     this.memory.link_id=-1;
     this.memory.upgrading=0;
     if(serve_id!=-1) this.memory.serve_id=serve_id;
+    if(type=='core'){
+        this.memory.attack_target=0;
+        this.memory.heal_target=0;
+        this.memory.repair_target=0;
+    }
 }
 Flag.prototype.run=function(){
     type_dic[this.memory.type].run(this);
@@ -29,7 +34,10 @@ Flag.prototype.upgrade_creep=function(){
     else if(this.memory.link_id==-1) type=1;
     else type=2;
     var info=this.get_most_efficiency_worker(type);
-    var Body=C([R([WORK],info[1]),R([CARRY],info[2]),R([MOVE],info[3])]);
+    var Body;
+    if(info[2]<info[3]) Body=C([R([WORK],info[1]),R([CARRY,MOVE],info[2]),R([MOVE],info[3]-info[2])]);
+    else if(info[2]==info[3]) Body=C([R([WORK],info[1]),R([CARRY,MOVE],info[2])]);
+    else Body=C([R([WORK],info[1]),R([CARRY],info[2]-info[3]),R([CARRY,MOVE],info[3])]);
     var Mem={flag_name:this.name,work_id:this.memory.serve_id,work_parts:info[1]},ac_num=this.memory.ac_creep_num;
     this.memory.creep_detail={'Body':Body,'num':info[0],'Mem':Mem}
     for(let i=0;i<info[0]-ac_num;i++)

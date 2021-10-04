@@ -176,7 +176,7 @@ Creep.prototype.contract_Task=function(){
 				var keep_T={'type':type,'room':Task['room'],'pos':Task['pos'],'ammount':t_ammount,'ammount_all':t_ammount,'method':Task['method'],'id':Task['id'],'status':Task['status'],'time':Task['time']};
 				if(Task['detail']) keep_T['detail']=Task['detail'];
 				this.memory.contracted_Task.push(keep_T);
-				
+				if(type=='harvest') Game.rooms[this.memory.center_room].memory.temp_keep['harvest_energy']+=this.store.getCapacity()-c_ammount;
 				if(!this.store.getCapacity()&&type=='harvest') c_ammount=0;
 				else c_ammount-=t_ammount;
 				Task['ammount']-=t_ammount;
@@ -273,8 +273,7 @@ Creep.prototype.contract_Task=function(){
 				var keep_T={'type':type,'room':Task['room'],'pos':Task['pos'],'ammount':t_ammount,'ammount_all':t_ammount,'method':Task['method'],'id':Task['id'],'status':Task['status'],'time':Task['time']};
 				if(Task['detail']) keep_T['detail']=Task['detail'];
 				this.memory.contracted_Task.push(keep_T);
-				if(!this.store.getCapacity()&&type=='harvest') c_ammount=0;
-				else if(type!='sign') c_ammount-=t_ammount;
+				if(type!='sign') c_ammount-=t_ammount;
 				Task['ammount']-=t_ammount;
 				c_room=Game.rooms[Task['room']];
 				c_pos=Game.rooms[Task['room']].getPositionAt(Task['pos'][0],Task['pos'][1]);
@@ -330,13 +329,16 @@ Creep.prototype.contract_Task=function(){
 	}
 }
 Creep.prototype.execute_Task=function(){
-	if(Game.rooms[this.memory.center_room].memory.urgent_status['spawn']==1&&this.memory.role=='builder'||this.memory.role=='upgrader'||this.memory.role=='repairer')
+	if(Game.rooms[this.memory.center_room].memory.urgent_status['spawn']==1&&(this.memory.role=='builder'||this.memory.role=='upgrader'||this.memory.role=='repairer')){
 		Game.rooms[this.memory.center_room].memory.temp_keep['consume_energy']+=this.memory.work_parts*2;
+	}
 	if(this.memory.cool_down_tick>0){
 		this.memory.cool_down_tick-=1;
 		if(Game.rooms[this.memory.center_room].memory.urgent_status['spawn']==0){
-			if(this.memory.role=='carrier') Game.rooms[this.memory.center_room].memory.temp_keep['carry_energy']+=this.memory.carry_parts*2;
-			else if(this.memory.role=='builder'||this.memory.role=='upgrader'||this.memory.role=='repairer') Game.rooms[this.memory.center_room].memory.temp_keep['consume_energy']+=this.memory.work_parts*2;	
+			if(this.memory.role=='builder'||this.memory.role=='upgrader'||this.memory.role=='repairer'){
+				Game.rooms[this.memory.center_room].memory.temp_keep['consume_energy']+=this.memory.work_parts*2;
+			}
+			else if(this.memory.role=='harvester') Game.rooms[this.memory.center_room].memory.temp_keep['harvest_energy']+=this.memory.work_parts*2;
 		}
 		return;
 	}
@@ -358,7 +360,9 @@ Creep.prototype.work_=function(type){
 		if(done>0){
 			C_Task['ammount']-=done;
 			if(type=='harvest') Game.rooms[this.memory.center_room].memory.temp_keep['harvest_energy']+=done;
-			else Game.rooms[this.memory.center_room].memory.temp_keep['consume_energy']+=done;
+			else{
+				Game.rooms[this.memory.center_room].memory.temp_keep['consume_energy']+=done;
+			}
 		}
 		if(C_Task['ammount']<=0||(type=='harvest'&&this.store.getFreeCapacity()==0)||(type!='harvest'&&this.store.getUsedCapacity()==0)){
 			var Task=Game.rooms[this.memory.center_room].memory.creep_Task[type][C_Task['status']][C_Task['id']];
@@ -437,11 +441,7 @@ Creep.prototype.carry_=function(type,method){
 	if(this.memory.id_keep==C_Task['id']){
 		done=Math.abs(this.store[RESOURCE_ENERGY]-this.memory.energy_keep);
 		this.memory.energy_keep=this.store[RESOURCE_ENERGY];
-		if(done>0){
-			C_Task['ammount']-=done;
-			if(this.memory.role!='harvester'&&C_Task['status']==1&&method=='withdraw') Game.rooms[this.memory.center_room].memory.temp_keep['carry_energy']+=done;
-			if(this.memory.role=='harvester'&&C_Task['status']!=1&&method=='transfer') Game.rooms[this.memory.center_room].memory.temp_keep['carry_energy']+=done;
-		}
+		if(done>0) C_Task['ammount']-=done;
 	}
 	this.memory.id_keep=C_Task['id'];
 	if(done>0||(this.store.getFreeCapacity()==0&&type=='take')||(this.store.getUsedCapacity()==0&&type=='bring')){
@@ -467,8 +467,10 @@ Creep.prototype.carry_=function(type,method){
 			}
 			else if(C_Task['ammount_all']-C_Task['ammount']>0) Game.rooms[this.memory.center_room].add_creep_Task(type2,C_Task['status'],C_Task['id'],{'method':method2,'room':C_Task['room'],'pos':C_Task['pos'],'ammount':C_Task['ammount_all']-C_Task['ammount'],'ammount_all':C_Task['ammount_all']-C_Task['ammount']});
 		}
-		this.memory.contracted_Task.splice(0,1);
-		this.execute_Task();
+		if(!(this.memory.contracted_Task[0]['time']-Game.time>0)){
+			this.memory.contracted_Task.splice(0,1);
+			this.execute_Task();
+		}
 		return 0;
 	}
 	var target=Game.getObjectById(C_Task['id']);

@@ -19,7 +19,7 @@ Room.prototype.init_room=function(mod=0){
 	this.memory.room_creeps={'carrier':[],'defender':[],'builder':[],'repairer':[],'upgrader':[]};
 	this.memory.maintain={'creep':{'upgrader':0,'carrier':0,'defender':0,'builder':0,'repairer':0},'ac_creep':{'upgrader':0,'carrier':0,'defender':0,'builder':0,'repairer':0},'structure':[]};
 	this.memory.centers={'arrange_center':-1,'energy_center':-1,'tower_center1':-1,'tower_center2':-1,'lab_center1':-1,'lab_center2':-1}
-	this.memory.temp_keep={'harvest_energy':0,'consume_energy':0,'carry_energy':0,'last_harvest_energy':0,'last_consume_energy':0,'last_carry_energy':0};
+	this.memory.temp_keep={'harvest_energy':0,'consume_energy':0,'last_harvest_energy':0,'last_consume_energy':0,'full_grade':0,'last_full_grade':0};
 	this.memory.long_keep={'building_status_dic':{}};
 }
 Room.prototype.add_virtual_creep_Task=function(type,status,id,info){
@@ -200,7 +200,7 @@ Room.prototype.manage_room_Task=function(){
 							}
 							if(T[i]['type']==STRUCTURE_SPAWN||T[i]['type']==STRUCTURE_TOWER){
 								this.memory.room_structures[T[i]['type']].push(target.id);
-								if(T[i]['type']==STRUCTURE_SPAWN) target.init_spawn();
+								target.init();
 							}
 							else if(T[i]['type']==STRUCTURE_LINK){
 								for(var type in this.memory.room_flags)
@@ -224,10 +224,6 @@ Room.prototype.manage_room_Task=function(){
 											if(type=='source'){
 												this.memory.long_keep['building_status_dic'][target.id]=1;
 												Game.flags[each].upgrade_creep();
-												if(this.memory.maintain['creep']['carrier']==0){
-													this.memory.maintain['creep']['carrier']+=1;
-													this.add_room_Task('spawn',{'urgent':0,'role':'carrier','Mem':{number:this.memory.maintain['creep']['carrier']-1,pos_neg:0}});
-												}
 											}
 											else if(type=='controller') this.memory.long_keep['building_status_dic'][target.id]=-0.5;
 											else if(type=='core') this.memory.long_keep['building_status_dic'][target.id]=0;
@@ -322,6 +318,18 @@ Room.prototype.manage_room=function(){
 			}
 		}
 	}
+	var store=0,cap=0;
+	for(var id in this.memory.long_keep['building_status_dic']){
+		var status=this.memory.long_keep['building_status_dic'][id];
+		if(status==1){
+			var target=Game.getObjectById(id);
+			if(target){
+				store+=target.store[RESOURCE_ENERGY];
+				cap+=target.store.getCapacity();
+			}
+		}
+	}
+	if(cap>0) this.memory.temp_keep['full_grade']+=(store/cap)/100;
 	//builder数量调节+carrier数量调节
 	if(Game.time%100==0){
 		if(this.memory.maintain['creep']['builder']<=this.memory.maintain['ac_creep']['builder']){
@@ -333,21 +341,22 @@ Room.prototype.manage_room=function(){
 				else if(this.memory.temp_keep['consume_energy']>=1.25*this.memory.temp_keep['harvest_energy']&&this.memory.maintain['creep']['builder']>=1)
 					this.memory.maintain['creep']['builder']-=1;
 		}
-		if(this.memory.maintain['creep']['carrier']>=1&&this.memory.maintain['creep']['carrier']<=this.memory.maintain['ac_creep']['carrier']){
-			if(this.memory.temp_keep['consume_energy']<1.25*this.memory.temp_keep['harvest_energy']&&1.25*this.memory.temp_keep['carry_energy']<this.memory.temp_keep['consume_energy']){
+		if(this.memory.maintain['creep']['carrier']<=this.memory.maintain['ac_creep']['carrier']){
+			if(this.memory.temp_keep['full_grade']!=0){
+				if(this.memory.temp_keep['full_grade']>=0.5){
 					this.memory.maintain['creep']['carrier']+=1;
 					if(this.memory.maintain['creep']['carrier']>this.memory.maintain['ac_creep']['carrier'])
 						this.add_room_Task('spawn',{'urgent':0,'role':'carrier','Mem':{number:this.memory.maintain['creep']['carrier']-1,pos_neg:0}});
 				}
-				else if(1.25*this.memory.temp_keep['consume_energy']>=this.memory.temp_keep['harvest_energy']&&this.memory.temp_keep['carry_energy']>=1.25*this.memory.temp_keep['consume_energy']&&this.memory.maintain['creep']['carrier']>=2)
+				else if(this.memory.temp_keep['full_grade']<=0.2)
 					this.memory.maintain['creep']['carrier']-=1;
+			}
 		}
 		this.memory.temp_keep['last_harvest_energy']=this.memory.temp_keep['harvest_energy']-this.memory.temp_keep['last_harvest_energy']/2;
 		this.memory.temp_keep['last_consume_energy']=this.memory.temp_keep['consume_energy']-this.memory.temp_keep['last_consume_energy']/2;
-		this.memory.temp_keep['last_carry_energy']=this.memory.temp_keep['carry_energy']-this.memory.temp_keep['last_carry_energy']/2;
 		this.memory.temp_keep['harvest_energy']=this.memory.temp_keep['last_harvest_energy']/2;
 		this.memory.temp_keep['consume_energy']=this.memory.temp_keep['last_consume_energy']/2;
-		this.memory.temp_keep['carry_energy']=this.memory.temp_keep['last_carry_energy']/2;
+		this.memory.temp_keep['full_grade']=0;
 	}
 	//发布+矫正 pickup任务
 	if(Game.time%20==0){

@@ -1,7 +1,7 @@
 const C=(arr)=>[].concat(...arr);
 const R=(arr,repeats)=>[].concat([].concat(...Array.from({length:repeats},()=>arr)));
 const body_price={'move':50,'work':100,'carry':50,'attack':80,'ranged_attack':150,'heal':250,'claim':600,'tough':10}
-Spawn.prototype.init_spawn=function(){
+Spawn.prototype.init=function(){
 	this.memory.spawn_directions={};
 	this.memory.spawn_memory=-1;
 	this.memory.urgent_spawn_count=0;
@@ -89,7 +89,9 @@ Spawn.prototype.run=function(){
 			}
 			else if(this.room.memory.maintain['ac_creep'][role]<this.room.memory.maintain['creep'][role]) this.room.memory.maintain['ac_creep'][role]+=1;
 		}
-		for(let each of Body) this.room.memory.temp_keep['consume_energy']+=body_price[each];
+		for(let each of Body){
+			this.room.memory.temp_keep['consume_energy']+=body_price[each];
+		}
 		this.room.add_room_Task('adjust_spawn_carry_task',{});
 		for(var id in this.room.memory.long_keep['building_status_dic']){
 			var target=Game.getObjectById(id);
@@ -120,54 +122,36 @@ Spawn.prototype.run=function(){
 	}
 	return spawnSuccess;
 }
-/*
-var common_repair_source_keep=1000;
+StructureTower.prototype.init=function(){
+}
 StructureTower.prototype.run=function(){
-		var target=this.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-		if(target!=undefined){
+	//若tower repair频次过高，则增设repairer
+	var attack_target=this.room.memory.room_flags['core'][0].memory.attack_target;
+	if(attack_target!=0){
+		var target=Game.getObjectById(attack_target);
+		if(target){
 			this.attack(target);
-			return;
+			return
 		}
-		var target=this.pos.findClosestByRange(FIND_MY_CREEPS,{
-			filter: function(object){return object.hits<object.hitsMax;}});
+	}
+	var heal_target=this.room.memory.room_flags['core'][0].memory.heal_target;
+	if(heal_target!=0){
+		var target=Game.getObjectById(heal_target);
 		if(target){
 			this.heal(target);
-			return;
+			return
 		}
-		if(this.store[RESOURCE_ENERGY]<500||this.room.memory.urgent_status['spawn']==1||this.room.memory.emergency>0){
-			return;
+	}
+	var repair_target=this.room.memory.room_flags['core'][0].memory.repair_target;
+	if(repair_target!=0){
+		var target=Game.getObjectById(repair_target);
+		if(target){
+			this.repair(target);
+			return
 		}
-		if(this.room.storage!=null){
-			if(this.room.storage.store[RESOURCE_ENERGY]<common_repair_source_keep){
-				return;
-			}
-		}
-		var targets=this.room.find(FIND_STRUCTURES,{
-			filter: object=>object.hits<object.hitsMax
-			&&object.structureType!=STRUCTURE_WALL&&object.structureType!=STRUCTURE_RAMPART});
-		targets.sort((a,b)=>(a.hits)-(b.hits));
-		if(targets.length>0){
-			this.repair(targets[0]);
-			return;
-		}
-		if(this.room.energyCapacityAvailable>this.room.energyAvailable*2){
-			return;
-		}
-		if(this.room.storage){
-			if(this.room.storage.store[RESOURCE_ENERGY]<this.room.memory.wall_limit){
-				return;
-			}
-		}
-		if(this.store[RESOURCE_ENERGY]>=499){
-			var targets=this.room.find(FIND_STRUCTURES,{
-				filter: object=>object.hits<object.hitsMax
-				&&(object.structureType==STRUCTURE_WALL||object.structureType==STRUCTURE_RAMPART)&&object.hits<this.room.memory.wall_limit});
-			targets.sort((a,b)=>(a.hits)-(b.hits));
-			if(targets.length>0){
-				this.repair(targets[0]);
-			}
-		}
+	}
 };
+/*
 StructureLink.prototype.run=function(){
 	var links=_.filter(Game.structures,s=>s.structureType==STRUCTURE_LINK);
 	for(let link of links){
